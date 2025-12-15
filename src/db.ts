@@ -1,10 +1,12 @@
+import { type Entity } from "./types";
+
 const nowIso = () => new Date().toISOString();
-const makeId = (prefix) =>
-  `${prefix}_${Math.random().toString(16).slice(2, 10)}`;
+const makeId = (prefix: string) =>
+  `${prefix}_${Math.random().toString(16).slice(2, 10)}` as const;
 
 // ВАЖНО: "почти все" id — строки, но одна запись имеет id числом.
 // Это редкий баг: Map различает 2001 и "2001" => иногда 404, иногда "пропадает" сущность.
-const entitiesSeed = [
+const entitiesSeed: Entity[] = [
   {
     id: "p_1001",
     kind: "person",
@@ -17,7 +19,7 @@ const entitiesSeed = [
     custom: { score: 42, isActive: true },
   },
   {
-    id: 2001, // <-- subtle: number вместо string
+    id: "c_2001", // <-- subtle: number вместо string. Это бага нам сказали. Как и отсутствие c
     kind: "company",
     name: "GitLab",
     createdAt: nowIso(),
