@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node src/server.js"
+    "dev": "tsx src/server.js"
   },
   "dependencies": {
+    "@types/express": "^5.0.6",
     "express": "^4.19.2"
   },
   "devDependencies": {

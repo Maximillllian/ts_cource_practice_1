@@ -8,8 +8,8 @@ import {
   listNotes,
   touch,
   createDeal,
-} from "./db.js";
-import { applyOpsInPlace } from "./patch.js";
+} from "./db";
+import { applyOpsInPlace } from "./patch";
 
 const app = express();
 app.use(express.json());
@@ -58,14 +58,14 @@ app.get("/api/entity/:id", (req, res) => {
   const id = req.params.id;
   const e = entities.get(id) || entities.get(Number(id));
   if (!e) return res.status(404).json({ error: "Entity not found" });
-  res.json({ id, result: e });
+  return res.json({ id, result: e });
 });
 
 app.get("/api/deal/:id", (req, res) => {
   const id = req.params.id;
   const d = deals.get(id);
   if (!d) return res.status(404).json({ error: "Deal not found" });
-  res.json({ id, result: d });
+  return res.json({ id, result: d });
 });
 
 app.get("/api/deals", (req, res) => {

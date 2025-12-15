@@ -12,7 +12,7 @@
       "noImplicitReturns": true,
       "noFallthroughCasesInSwitch": true,
       "useUnknownInCatchVariables": true,
-      // "allowImportingTsExtensions": true,
+    //   "allowImportingTsExtensions": true,
       // "noEmit": true,
   
       "noUnusedLocals": true,
