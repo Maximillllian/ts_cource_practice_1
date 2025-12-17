@@ -10,8 +10,15 @@
 //     custom: { score: i * 3 },
 //   }
 
+export type PrefixedId<Prefix extends string> = `${Prefix}_${string}`;
+
+export type PersonId = PrefixedId<'p'>; 
+export type CompanyId = PrefixedId<'c'>; 
+export type DealId = PrefixedId<'d'>;
+export type NoteId = PrefixedId<'n'>;
+
 type BaseEntity = {
-    id: string,
+    id: PrefixedId<string>,
     kind: string,
     name: string,
     createdAt: string,
@@ -20,18 +27,37 @@ type BaseEntity = {
     custom: Record<string, unknown>
 }
 
-type Person = BaseEntity & {
-    id: `p_${string}`,
+export type Person = BaseEntity & {
+    id: PersonId,
     kind: 'person',
     email: string | null,
     dob: string | undefined, 
 };
 
 interface Company extends BaseEntity {
-    id: `c_${string}`,
+    id: CompanyId,
     kind: 'company',
     domain: string | undefined,
     foundedAt: string,
+}
+
+export type Note = {
+    id: NoteId,
+    subjectKind: string, // ???
+    subjectId: string, // ???
+    text: string, // ???
+    createdAt: string,
+};
+
+export type Deal = {
+    id: DealId,
+    title: string,
+    stage: string, // 'lead', 'proposal', 'stage'
+    amount: number,
+    ownerId: PersonId,
+    contactIds: Person['id'][],
+    createdAt: string,
+    updatedAt: string,
 }
 
 export type Entity = Person | Company;
