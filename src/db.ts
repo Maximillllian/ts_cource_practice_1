@@ -1,4 +1,4 @@
-import { Deal, DealId, Note, Person, PrefixedId, type Entity } from "./types";
+import { Deal, DealId, Note, Person, PrefixedId, type Entity } from "./types/model";
 
 const nowIso = () => new Date().toISOString();
 
@@ -65,7 +65,8 @@ export const entities = new Map(entitiesSeed.map((e) => [e.id, e]));
 
 const dealsSeed: Deal[] = [
   {
-    id: "d_3001",
+        id: "d_3001",
+      kind: "deal",
     title: "Renewal Q4",
     stage: "proposal",
     amount: 12000,
@@ -75,7 +76,8 @@ const dealsSeed: Deal[] = [
     updatedAt: nowIso(),
   },
   {
-    id: "d_3002",
+      id: "d_3002",
+      kind: "deal",
     title: "Enterprise Upsell",
     stage: "negotiation",
     amount: 50000,
@@ -88,7 +90,8 @@ const dealsSeed: Deal[] = [
 
 for (let i = 0; i < 10; i++) {
   dealsSeed.push({
-    id: `d_${3100 + i}`,
+      id: `d_${3100 + i}`,
+      kind: "deal",
     title: `Deal ${i}`,
     stage: i % 3 === 0 ? "lead" : "proposal",
     amount: 1000 + i * 250,
@@ -132,7 +135,8 @@ type CreateDealInput = Pick<Deal, 'title' | 'amount' | 'ownerId' | 'contactIds'>
 export function createDeal({ title, amount, ownerId, contactIds }: CreateDealInput) {
   const d = {
     id: makeId("d"),
-    title,
+      title,
+      kind: "deal",
     stage: "lead",
     amount: Number(amount) || 0,
     ownerId,

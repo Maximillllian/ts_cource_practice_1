@@ -1,16 +1,7 @@
 import assert from "node:assert";
+import { Operation, UnknownObject } from "./types/dto";
+import { assertNever } from "./assert";
 
-type Operation = {
-    path: string, // ???
-    op: "set" | "unset" | "push" | "inc",
-    value: unknown, // ???
-}
-
-type UnknownObject = Record<string, unknown>;
-
-function assertNever(_operation: never) {
-    throw new Error("Unexpected situation");
-}
 
 export function applyOpsInPlace(obj: UnknownObject, ops: Operation[]) {
   for (const op of ops || []) {

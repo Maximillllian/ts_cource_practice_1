@@ -17,7 +17,9 @@ export type CompanyId = PrefixedId<'c'>;
 export type DealId = PrefixedId<'d'>;
 export type NoteId = PrefixedId<'n'>;
 
-type BaseEntity = {
+export type EntityId = PersonId | CompanyId;
+
+export type BaseEntity = {
     id: PrefixedId<string>,
     kind: string,
     name: string,
@@ -34,7 +36,7 @@ export type Person = BaseEntity & {
     dob: string | undefined, 
 };
 
-interface Company extends BaseEntity {
+export interface Company extends BaseEntity {
     id: CompanyId,
     kind: 'company',
     domain: string | undefined,
@@ -51,6 +53,7 @@ export type Note = {
 
 export type Deal = {
     id: DealId,
+    kind: "deal",
     title: string,
     stage: string, // 'lead', 'proposal', 'stage'
     amount: number,

@@ -10,9 +10,32 @@ import {
   createDeal,
 } from "./db";
 import { applyOpsInPlace } from "./patch";
+import { BaseEntity, Company, Deal, DealId, EntityId, Person, PersonId, PrefixedId } from "./types/model";
+import assert from "node:assert";
+import { Operation, UnknownObject } from "./types/dto";
+import { assertNever } from "./assert";
 
 const app = express();
 app.use(express.json());
+
+type SearchResult = {
+    name: BaseEntity["name"],
+    hint: string
+} & (
+    | Pick<Company, "id" | "kind">
+    | Pick<Person, "id" | "kind">
+    | Pick<Deal, "id" | "kind">
+    )
+
+// {
+//     id: e.id,
+//     kind: e.kind, // "person" | "company"
+//     name: e.name,
+//     hint:
+//       e.kind === "company"
+//         ? (e.domain ?? "no-domain")
+//         : (e.email ?? "no-email"),
+//   }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use("/", express.static(path.join(__dirname, "../dist/public/public")));
@@ -22,19 +45,29 @@ app.get("/api/search", (req, res) => {
     .toLowerCase()
     .trim();
 
-  const result = [];
+  const result = [] as SearchResult[];
 
   for (const e of entities.values()) {
     if (!q || String(e.name).toLowerCase().includes(q)) {
-      result.push({
-        id: e.id,
-        kind: e.kind, // "person" | "company"
-        name: e.name,
-        hint:
-          e.kind === "company"
-            ? (e.domain ?? "no-domain")
-            : (e.email ?? "no-email"),
-      });
+        const { kind, id, name } = e;
+        if (kind === 'company') {
+            result.push({
+                id,
+                kind,
+                name,
+                hint: e.domain ?? "no-domain"
+              });
+        } else if (kind === 'person') {
+            result.push({
+                id,
+                kind,
+                name,
+                hint: e.email ?? "no-email",
+              });
+        } else {
+            assertNever(kind);
+      }
+      
     }
   }
 
@@ -55,14 +88,14 @@ app.get("/api/search", (req, res) => {
 });
 
 app.get("/api/entity/:id", (req, res) => {
-  const id = req.params.id;
-  const e = entities.get(id) || entities.get(Number(id));
+  const id = req.params.id as EntityId;
+  const e = entities.get(id);
   if (!e) return res.status(404).json({ error: "Entity not found" });
   return res.json({ id, result: e });
 });
 
 app.get("/api/deal/:id", (req, res) => {
-  const id = req.params.id;
+  const id = req.params.id as DealId;
   const d = deals.get(id);
   if (!d) return res.status(404).json({ error: "Deal not found" });
   return res.json({ id, result: d });
@@ -89,16 +122,17 @@ app.post("/api/deal", (req, res) => {
 });
 
 app.patch("/api/entity/:id", (req, res) => {
-  const id = req.params.id;
-  const entity = entities.get(id) || entities.get(Number(id));
+  const id = req.params.id as EntityId;
+  const entity = entities.get(id);
   if (!entity) return res.status(404).json({ error: "Entity not found" });
 
   const body = req.body || {};
 
   if (body.meta?.snapshot) {
     Object.assign(entity, body.meta.snapshot);
-  }
-  applyOpsInPlace(entity, body.ops);
+    }
+    // TODO проверка типов
+  applyOpsInPlace(entity as UnknownObject, body.ops as Operation[]);
 
   touch(entity);
 
@@ -106,7 +140,7 @@ app.patch("/api/entity/:id", (req, res) => {
 });
 
 app.patch("/api/deal/:id", (req, res) => {
-  const id = req.params.id;
+  const id = req.params.id as DealId;
   const deal = deals.get(id);
   if (!deal) return res.status(404).json({ error: "Deal not found" });
 
@@ -125,6 +159,8 @@ app.patch("/api/deal/:id", (req, res) => {
 app.get("/api/notes", (req, res) => {
   const subjectKind = String(req.query.subjectKind ?? "");
   const subjectId = req.query.subjectId; // string
+  assert(typeof subjectId === 'string');  
+    
   res.json({
     subjectKind,
     subjectId,
