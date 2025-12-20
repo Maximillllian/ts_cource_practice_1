@@ -14,18 +14,10 @@ import { BaseEntity, Company, Deal, DealId, EntityId, Person, PersonId, Prefixed
 import assert from "node:assert";
 import { Operation, UnknownObject } from "./types/dto";
 import { assertNever } from "./assert";
+import { SearchResult } from "./types/shared";
 
 const app = express();
 app.use(express.json());
-
-type SearchResult = {
-    name: BaseEntity["name"],
-    hint: string
-} & (
-    | Pick<Company, "id" | "kind">
-    | Pick<Person, "id" | "kind">
-    | Pick<Deal, "id" | "kind">
-    )
 
 // {
 //     id: e.id,

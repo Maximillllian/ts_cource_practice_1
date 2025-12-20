@@ -1,20 +1,51 @@
-async function fetchJson(url, init) {
+import { SearchResult } from "src/types/shared";
+import { JsonResponse } from "./types";
+import { assert } from "./utils.js";
+import { Deal, Entity } from "src/types/model";
+
+
+
+type FetchParams = Parameters<typeof fetch>;
+type FetchUrl = FetchParams[0];
+type FetchInitParams = FetchParams[1];
+
+async function fetchJson<Type>(url: FetchUrl, init: FetchInitParams = {}) {
   const res = await fetch(url, init);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return await res.json();
+    const result = await res.json() as JsonResponse<Type>;
+    return result;
 }
 
-const $ = (id) => document.getElementById(id);
+async function fetchEntities(query: string | null) {
+    const q = query ? `?q=${encodeURIComponent(query)}` : "";
+    return await fetchJson<SearchResult[]>(`/api/search${q}`);
+} 
 
-const q = $("q");
+async function fetchEntity(id: Entity["id"]) {
+    const d = await fetchJson<Entity>(
+        `/api/entity/${encodeURIComponent(String(id))}`,
+    );
+    return d;
+}
+
+async function fetchDeal(id: Deal["id"]) {
+    const d = await fetchJson<Deal>(
+        `/api/deal/${encodeURIComponent(String(id))}`,
+    );
+    return d;
+}
+
+const $ = (id: string) => document.getElementById(id);
+
+const q = $("q") as HTMLInputElement;
 const searchBtn = $("searchBtn");
 const list = $("list");
 
 const details = $("details");
 const raw = $("raw");
 
-const dealTitle = $("dealTitle");
-const dealAmount = $("dealAmount");
+const dealTitle = $("dealTitle") as HTMLInputElement;
+const dealAmount = $("dealAmount") as HTMLInputElement;
 const createDealBtn = $("createDealBtn");
 const ownerDeals = $("ownerDeals");
 
@@ -26,15 +57,20 @@ const noteKind = $("noteKind");
 const noteText = $("noteText");
 const addNoteBtn = $("addNoteBtn");
 const notesDiv = $("notes");
-let selected = null;
-let selectedDetails = null;
+let selected: SearchResult | null = null;
+let selectedDetails: Entity | Deal | null = null;
 
+assert(searchBtn);
 searchBtn.onclick = async () => {
-  const data = await fetchJson(`/api/search?q=${encodeURIComponent(q.value)}`);
+    console.log('here', q);
+    const query = q?.value ?? "";
+    const data = await fetchEntities(query);
+    console.log({ data });
   renderList(data.result);
 };
 
-function renderList(items) {
+function renderList(items: SearchResult[]) {
+    assert(list);
   list.innerHTML = "";
 
   for (const item of items) {
@@ -48,9 +84,7 @@ function renderList(items) {
 
     el.onclick = async () => {
       selected = item;
-      const d = await fetchJson(
-        `/api/entity/${encodeURIComponent(String(item.id))}`,
-      );
+      const d = selected.kind === 'deal' ? await fetchDeal(selected.id) : await fetchEntity(selected.id)
       selectedDetails = d.result;
 
       renderDetails();
@@ -63,19 +97,25 @@ function renderList(items) {
 }
 
 function renderDetails() {
+  assert(details);
+
   if (!selectedDetails) {
     details.textContent = "Select item...";
     return;
   }
 
+    const name = selectedDetails.kind === 'deal' ? selectedDetails.title : selectedDetails.name;
   details.innerHTML = `
-    <div><b>${escapeHtml(String(selectedDetails.name || selectedDetails.title))}</b></div>
+    <div><b>${escapeHtml(name)}</b></div>
     <div class="muted">id: ${escapeHtml(String(selectedDetails.id))}</div>
     <div class="muted">kind: ${escapeHtml(String(selectedDetails.kind || "deal?"))}</div>
   `;
+    
+  assert(raw);
   raw.textContent = JSON.stringify(selectedDetails, null, 2);
 }
 
+assert(createDealBtn);
 createDealBtn.onclick = async () => {
   if (!selected) return;
 
@@ -95,6 +135,7 @@ createDealBtn.onclick = async () => {
 };
 
 async function refreshOwnerDeals() {
+    
   ownerDeals.innerHTML = "";
   if (!selected) return;
 
